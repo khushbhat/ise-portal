@@ -1,45 +1,68 @@
+import { useState, useEffect } from "react";
 import { BookOpen, FileText, GraduationCap, Calendar, BookMarked, Award } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Resources = () => {
-  const resourceCategories = [
+  const [resourceCategories, setResourceCategories] = useState([
     {
-      icon: BookOpen,
+      id: "1",
+      icon: "BookOpen",
       title: "Syllabus",
       description: "Course syllabus and curriculum details",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
     {
-      icon: FileText,
+      id: "2",
+      icon: "FileText",
       title: "Study Materials",
       description: "Lecture notes and reference materials",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
     {
-      icon: GraduationCap,
+      id: "3",
+      icon: "GraduationCap",
       title: "Innovations in Teaching & Learning",
       description: "Modern pedagogical approaches and methods",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
     {
-      icon: Calendar,
+      id: "4",
+      icon: "Calendar",
       title: "Timetables",
       description: "Current semester schedules and timetables",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
     {
-      icon: BookMarked,
+      id: "5",
+      icon: "BookMarked",
       title: "Vo'ISE Magazines",
       description: "Departmental magazine and publications",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
     {
-      icon: Award,
+      id: "6",
+      icon: "Award",
       title: "NBA Documents",
       description: "Accreditation and quality assurance documents",
-      link: "#", // Replace with actual Google Drive link
+      link: "#",
     },
-  ];
+  ]);
+
+  const iconMap: { [key: string]: any } = {
+    BookOpen,
+    FileText,
+    GraduationCap,
+    Calendar,
+    BookMarked,
+    Award,
+  };
+
+  useEffect(() => {
+    const savedResources = localStorage.getItem("resources");
+    if (savedResources) {
+      setResourceCategories(JSON.parse(savedResources));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -58,27 +81,30 @@ const Resources = () => {
       {/* Resources Grid */}
       <section className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {resourceCategories.map((resource, index) => (
-            <a
-              key={index}
-              href={resource.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <Card className="glass-card hover-lift cursor-pointer h-full">
-                <CardHeader>
-                  <resource.icon className="h-12 w-12 text-accent mb-4" />
-                  <CardTitle className="text-xl">{resource.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">
-                    {resource.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            </a>
-          ))}
+          {resourceCategories.map((resource) => {
+            const IconComponent = iconMap[resource.icon] || BookOpen;
+            return (
+              <a
+                key={resource.id}
+                href={resource.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <Card className="glass-card hover-lift cursor-pointer h-full">
+                  <CardHeader>
+                    <IconComponent className="h-12 w-12 text-accent mb-4" />
+                    <CardTitle className="text-xl">{resource.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-base">
+                      {resource.description}
+                    </CardDescription>
+                  </CardContent>
+                </Card>
+              </a>
+            );
+          })}
         </div>
 
         <div className="mt-12 p-6 bg-muted rounded-lg">

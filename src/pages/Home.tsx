@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ArrowRight, BookOpen, Users, Award, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,23 +6,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Home = () => {
-  const announcements = [
+  const [announcements, setAnnouncements] = useState([
     {
+      id: "1",
       title: "Workshop on Machine Learning",
       date: "March 15, 2025",
       description: "Join us for an intensive workshop on modern ML techniques",
     },
     {
+      id: "2",
       title: "Research Paper Published",
       date: "March 10, 2025",
       description: "Dr. Smith's paper on AI ethics accepted in top-tier journal",
     },
     {
+      id: "3",
       title: "Placement Drive Success",
       date: "March 5, 2025",
       description: "95% of students placed in leading tech companies",
     },
-  ];
+  ]);
+
+  const [homeContent, setHomeContent] = useState({
+    heroTitle: "Information Science & Engineering",
+    heroSubtitle: "Department of ISE at Ramaiah Institute of Technology",
+    aboutTitle: "Welcome to ISE Department",
+    aboutDescription: "The Information Science and Engineering department is committed to providing cutting-edge education in computer science, data analytics, artificial intelligence, and emerging technologies. We nurture innovation, research excellence, and industry-ready graduates."
+  });
+
+  useEffect(() => {
+    const savedAnnouncements = localStorage.getItem("announcements");
+    const savedHomeContent = localStorage.getItem("homeContent");
+    
+    if (savedAnnouncements) {
+      setAnnouncements(JSON.parse(savedAnnouncements));
+    }
+    if (savedHomeContent) {
+      setHomeContent(JSON.parse(savedHomeContent));
+    }
+  }, []);
 
   const quickLinks = [
     {
@@ -60,10 +83,10 @@ const Home = () => {
         <div className="absolute inset-0 bg-gradient-hero opacity-90" />
         <div className="relative z-10 text-center text-primary-foreground px-4 max-w-4xl mx-auto animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-heading font-bold mb-6">
-            Information Science & Engineering
+            {homeContent.heroTitle}
           </h1>
           <p className="text-xl md:text-2xl mb-8 font-light">
-            Department of ISE at Ramaiah Institute of Technology
+            {homeContent.heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/about">
@@ -84,11 +107,9 @@ const Home = () => {
       {/* About Section */}
       <section className="container mx-auto px-4 py-16 animate-slide-up">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-heading font-bold mb-4">Welcome to ISE Department</h2>
+          <h2 className="text-4xl font-heading font-bold mb-4">{homeContent.aboutTitle}</h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            The Information Science and Engineering department is committed to providing cutting-edge
-            education in computer science, data analytics, artificial intelligence, and emerging technologies.
-            We nurture innovation, research excellence, and industry-ready graduates.
+            {homeContent.aboutDescription}
           </p>
         </div>
 
@@ -121,19 +142,23 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {announcements.map((announcement, index) => (
-              <Card key={index} className="glass-card hover-lift">
-                <CardHeader>
-                  <div className="text-sm text-accent font-medium mb-2">
-                    {announcement.date}
-                  </div>
-                  <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">{announcement.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {announcements.length > 0 ? (
+              announcements.slice(0, 3).map((announcement) => (
+                <Card key={announcement.id} className="glass-card hover-lift">
+                  <CardHeader>
+                    <div className="text-sm text-accent font-medium mb-2">
+                      {announcement.date}
+                    </div>
+                    <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{announcement.description}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-3 text-center">No announcements yet</p>
+            )}
           </div>
         </div>
       </section>

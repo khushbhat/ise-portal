@@ -1,7 +1,20 @@
+import { useState, useEffect } from "react";
 import { Target, Eye, Award, Building2, History, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const About = () => {
+  const [aboutContent, setAboutContent] = useState({
+    vision: "To evolve as an outstanding education and research center of Information Technology to create high quality Engineering Professionals for the betterment of Society.",
+    mission: "Department of Information Science and Engineering shall create high quality IT Engineering Professionals for the betterment of society by: Providing education through an ever improving curriculum and effective pedagogy techniques. Encouraging extra and co-curricular activities to develop their overall personality along with technical skills. Collaborating with industry and academia for strengthening research, innovation and entrepreneurship ecosystem.",
+    departmentProfile: "The Department of Information Science and Engineering (ISE) was established in the year 1992 with an objective of producing high quality professionals to meet the demands of the emerging field of Information Technology. Department offers Bachelor's program in Information Science and Engineering (B.E), Master's program in Data Science (MTech) and Doctoral program (Ph.D.)."
+  });
+
+  useEffect(() => {
+    const savedAboutContent = localStorage.getItem("aboutContent");
+    if (savedAboutContent) {
+      setAboutContent(JSON.parse(savedAboutContent));
+    }
+  }, []);
   const stats = [
     { number: "90%", label: "High Profile Placements" },
     { number: "300+", label: "Research Publications" },
@@ -48,7 +61,7 @@ const About = () => {
           </CardHeader>
           <CardContent>
             <p className="text-lg leading-relaxed">
-              To evolve as an outstanding education and research center of Information Technology to create high quality Engineering Professionals for the betterment of Society.
+              {aboutContent.vision}
             </p>
           </CardContent>
         </Card>
@@ -61,14 +74,9 @@ const About = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-lg leading-relaxed mb-4">
-              Department of Information Science and Engineering shall create high quality IT Engineering Professionals for the betterment of society by:
+            <p className="text-lg leading-relaxed whitespace-pre-line">
+              {aboutContent.mission}
             </p>
-            <ul className="space-y-2 text-lg">
-              <li>• Providing education through an ever improving curriculum and effective pedagogy techniques.</li>
-              <li>• Encouraging extra and co-curricular activities to develop their overall personality along with technical skills.</li>
-              <li>• Collaborating with industry and academia for strengthening research, innovation and entrepreneurship ecosystem.</li>
-            </ul>
           </CardContent>
         </Card>
       </div>
@@ -79,23 +87,8 @@ const About = () => {
         <Card className="glass-card">
           <CardContent className="pt-6">
             <div className="prose prose-lg max-w-none">
-              <p className="text-lg leading-relaxed mb-4">
-                The Department of Information Science and Engineering (ISE) was established in the year 1992 with an objective of producing high quality professionals to meet the demands of the emerging field of Information Technology. Department offers Bachelor's program in Information Science and Engineering (B.E), Master's program in Data Science (MTech) and Doctoral program (Ph.D.).
-              </p>
-              <p className="text-lg leading-relaxed mb-4">
-                The Department of Information Science and Engineering, is a progressive department that has made significant contributions to Academics, Research and Innovation. Under Graduate (UG) program acquired accreditation status from National Board of Accreditation (NBA) since 2001 under tier-1 scheme.
-              </p>
-              <p className="text-lg leading-relaxed mb-4">
-                The department has highly qualified and competent faculty members committed to innovative teaching learning and quality research. Department has 8 well-equipped state of the art laboratories which meets the requirement of curriculum, innovation and research.
-              </p>
-              <p className="text-lg leading-relaxed mb-4">
-                Collaboration with industries such as Apple, Unisys, Mindtree, Intel, Google, SECO, IBM, NVIDIA etc, has a significant impact on the curriculum, computing infrastructure, teaching & learning and research.
-              </p>
-              <p className="text-lg leading-relaxed mb-4">
-                The curriculum is centred around Data Science, Artificial Intelligence, IOT, Cloud & Distributed Computing, System Programming, Computer Security and Software development. Curriculum and the teaching learning process ensure that the students demonstrate technical competence, ethical reasoning, creativity in identification & formulation of the problems and develop solutions by using appropriate tools & techniques.
-              </p>
-              <p className="text-lg leading-relaxed">
-                Department has established technical clubs/ professional student chapters to provide collaborative learning platform for the students. Echo system has been built to initiate start-ups/Innovation at the department level along with the mentorship program. The activities of the Department led to high profile placements, motivation to become an entrepreneur, and encouragement for higher learning.
+              <p className="text-lg leading-relaxed whitespace-pre-line">
+                {aboutContent.departmentProfile}
               </p>
             </div>
           </CardContent>

@@ -1,22 +1,30 @@
+import { useState, useEffect } from "react";
 import { Users, FileText, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const BOSandBOE = () => {
-  const bosMembers = [
-    { name: "Dr. John Doe", designation: "Chairperson", affiliation: "Head of Department, ISE" },
-    { name: "Dr. Jane Smith", designation: "Member", affiliation: "Professor, ISE" },
-    { name: "Dr. Robert Johnson", designation: "Member", affiliation: "Associate Professor, ISE" },
-    { name: "Industry Expert 1", designation: "External Member", affiliation: "Tech Company" },
-    { name: "Industry Expert 2", designation: "External Member", affiliation: "Software Firm" },
-  ];
+  const [allMembers, setAllMembers] = useState([
+    { id: "1", name: "Dr. John Doe", designation: "Chairperson", affiliation: "Head of Department, ISE", type: "BOS" },
+    { id: "2", name: "Dr. Jane Smith", designation: "Member", affiliation: "Professor, ISE", type: "BOS" },
+    { id: "3", name: "Dr. Robert Johnson", designation: "Member", affiliation: "Associate Professor, ISE", type: "BOS" },
+    { id: "4", name: "Industry Expert 1", designation: "External Member", affiliation: "Tech Company", type: "BOS" },
+    { id: "5", name: "Industry Expert 2", designation: "External Member", affiliation: "Software Firm", type: "BOS" },
+    { id: "6", name: "Dr. Michael Brown", designation: "Chairperson", affiliation: "Dean, Engineering", type: "BOE" },
+    { id: "7", name: "Dr. Sarah Wilson", designation: "Member", affiliation: "Professor, CSE", type: "BOE" },
+    { id: "8", name: "Dr. David Lee", designation: "Member", affiliation: "HOD, ISE", type: "BOE" },
+    { id: "9", name: "Academic Expert 1", designation: "External Member", affiliation: "University", type: "BOE" },
+    { id: "10", name: "Industry Expert", designation: "External Member", affiliation: "Industry", type: "BOE" },
+  ]);
 
-  const boeMembers = [
-    { name: "Dr. Michael Brown", designation: "Chairperson", affiliation: "Dean, Engineering" },
-    { name: "Dr. Sarah Wilson", designation: "Member", affiliation: "Professor, CSE" },
-    { name: "Dr. David Lee", designation: "Member", affiliation: "HOD, ISE" },
-    { name: "Academic Expert 1", designation: "External Member", affiliation: "University" },
-    { name: "Industry Expert", designation: "External Member", affiliation: "Industry" },
-  ];
+  useEffect(() => {
+    const savedMembers = localStorage.getItem("bosMembers");
+    if (savedMembers) {
+      setAllMembers(JSON.parse(savedMembers));
+    }
+  }, []);
+
+  const bosMembers = allMembers.filter(m => m.type === "BOS");
+  const boeMembers = allMembers.filter(m => m.type === "BOE");
 
   return (
     <div className="min-h-screen">
@@ -45,19 +53,23 @@ const BOSandBOE = () => {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {bosMembers.map((member, index) => (
-              <Card key={index} className="glass-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">{member.name}</CardTitle>
-                  <CardDescription className="text-base font-medium text-accent">
-                    {member.designation}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{member.affiliation}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {bosMembers.length > 0 ? (
+              bosMembers.map((member) => (
+                <Card key={member.id} className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{member.name}</CardTitle>
+                    <CardDescription className="text-base font-medium text-accent">
+                      {member.designation}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{member.affiliation}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-3">No BOS members added yet</p>
+            )}
           </div>
         </div>
 
@@ -73,19 +85,23 @@ const BOSandBOE = () => {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {boeMembers.map((member, index) => (
-              <Card key={index} className="glass-card">
-                <CardHeader>
-                  <CardTitle className="text-lg">{member.name}</CardTitle>
-                  <CardDescription className="text-base font-medium text-accent">
-                    {member.designation}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{member.affiliation}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {boeMembers.length > 0 ? (
+              boeMembers.map((member) => (
+                <Card key={member.id} className="glass-card">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{member.name}</CardTitle>
+                    <CardDescription className="text-base font-medium text-accent">
+                      {member.designation}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{member.affiliation}</p>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-muted-foreground col-span-3">No BOE members added yet</p>
+            )}
           </div>
         </div>
 
