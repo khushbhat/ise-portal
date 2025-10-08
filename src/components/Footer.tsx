@@ -13,9 +13,7 @@ const Footer = () => {
               <div className="flex items-start gap-2">
                 <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <p className="text-sm">
-                  Information Science & Engineering Department
-                  <br />
-                  College Campus, City - 560001
+                  Information Science & Engineering Department, Ramaiah Institute of Technology, M.S.R.I.T POST- 560054
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -33,23 +31,35 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-heading font-semibold mb-4">Quick Links</h3>
             <div className="grid grid-cols-2 gap-2">
-              <Link to="/about" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/about" className="text-sm hover:text-accent transition-colors">
                 About Us
               </Link>
-              <Link to="/faculty" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/faculty" className="text-sm hover:text-accent transition-colors">
                 Faculty
               </Link>
-              <Link to="/research" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/research" className="text-sm hover:text-accent transition-colors">
                 Research
               </Link>
-              <Link to="/events" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/events" className="text-sm hover:text-accent transition-colors">
                 Events
               </Link>
-              <Link to="/achievements" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/achievements" className="text-sm hover:text-accent transition-colors">
                 Achievements
               </Link>
-              <Link to="/contact" className="text-sm hover:text-secondary transition-colors">
+              <Link to="/resources" className="text-sm hover:text-accent transition-colors">
+                Resources
+              </Link>
+              <Link to="/bos-boe" className="text-sm hover:text-accent transition-colors">
+                BOS/BOE
+              </Link>
+              <Link to="/activities" className="text-sm hover:text-accent transition-colors">
+                Activities
+              </Link>
+              <Link to="/contact" className="text-sm hover:text-accent transition-colors">
                 Contact
+              </Link>
+              <Link to="/admin/login" className="text-sm hover:text-accent transition-colors">
+                Admin
               </Link>
             </div>
           </div>
@@ -60,28 +70,28 @@ const Footer = () => {
             <div className="flex gap-4">
               <a
                 href="#"
-                className="hover:text-secondary transition-colors"
+                className="hover:text-accent transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="h-6 w-6" />
               </a>
               <a
                 href="#"
-                className="hover:text-secondary transition-colors"
+                className="hover:text-accent transition-colors"
                 aria-label="Twitter"
               >
                 <Twitter className="h-6 w-6" />
               </a>
               <a
                 href="#"
-                className="hover:text-secondary transition-colors"
+                className="hover:text-accent transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="h-6 w-6" />
               </a>
               <a
                 href="#"
-                className="hover:text-secondary transition-colors"
+                className="hover:text-accent transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="h-6 w-6" />

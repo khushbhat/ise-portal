@@ -12,6 +12,11 @@ import Research from "./pages/Research";
 import Events from "./pages/Events";
 import Achievements from "./pages/Achievements";
 import Contact from "./pages/Contact";
+import Resources from "./pages/Resources";
+import BOSandBOE from "./pages/BOSandBOE";
+import Activities from "./pages/Activities";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +38,11 @@ const App = () => (
               <Route path="/events" element={<Events />} />
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/bos-boe" element={<BOSandBOE />} />
+              <Route path="/activities" element={<Activities />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

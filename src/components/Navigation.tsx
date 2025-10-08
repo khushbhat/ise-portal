@@ -14,6 +14,9 @@ const Navigation = () => {
     { name: "Research", path: "/research" },
     { name: "Events", path: "/events" },
     { name: "Achievements", path: "/achievements" },
+    { name: "Resources", path: "/resources" },
+    { name: "BOS/BOE", path: "/bos-boe" },
+    { name: "Activities", path: "/activities" },
     { name: "Contact", path: "/contact" },
   ];
 
@@ -25,8 +28,8 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <GraduationCap className="h-8 w-8 text-secondary" />
-            <span className="text-xl font-heading font-bold text-primary">ISE Department</span>
+            <GraduationCap className="h-8 w-8 text-accent" />
+            <span className="text-xl font-heading font-bold text-primary">Department of ISE, RIT</span>
           </Link>
 
           {/* Desktop Navigation */}

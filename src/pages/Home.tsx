@@ -63,7 +63,7 @@ const Home = () => {
             Information Science & Engineering
           </h1>
           <p className="text-xl md:text-2xl mb-8 font-light">
-            Shaping Tomorrow's Technology Leaders Through Innovation and Excellence
+            Department of ISE at Ramaiah Institute of Technology
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/about">
@@ -73,7 +73,7 @@ const Home = () => {
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-primary">
+              <Button size="lg" variant="outline" className="border-2">
                 Contact Us
               </Button>
             </Link>
@@ -98,7 +98,7 @@ const Home = () => {
             <Link key={index} to={item.link}>
               <Card className="glass-card hover-lift cursor-pointer h-full">
                 <CardHeader>
-                  <item.icon className="h-12 w-12 text-secondary mb-4" />
+                  <item.icon className="h-12 w-12 text-accent mb-4" />
                   <CardTitle className="text-xl">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -124,7 +124,7 @@ const Home = () => {
             {announcements.map((announcement, index) => (
               <Card key={index} className="glass-card hover-lift">
                 <CardHeader>
-                  <div className="text-sm text-secondary font-medium mb-2">
+                  <div className="text-sm text-accent font-medium mb-2">
                     {announcement.date}
                   </div>
                   <CardTitle className="text-lg">{announcement.title}</CardTitle>
