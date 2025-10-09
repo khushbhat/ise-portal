@@ -4,46 +4,37 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import heroBg from "@/assets/hero-bg.jpg";
+import { homeAPI } from "@/services/api";
 
 const Home = () => {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: "1",
-      title: "Workshop on Machine Learning",
-      date: "March 15, 2025",
-      description: "Join us for an intensive workshop on modern ML techniques",
-    },
-    {
-      id: "2",
-      title: "Research Paper Published",
-      date: "March 10, 2025",
-      description: "Dr. Smith's paper on AI ethics accepted in top-tier journal",
-    },
-    {
-      id: "3",
-      title: "Placement Drive Success",
-      date: "March 5, 2025",
-      description: "95% of students placed in leading tech companies",
-    },
-  ]);
-
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [homeContent, setHomeContent] = useState({
     heroTitle: "Information Science & Engineering",
     heroSubtitle: "Department of ISE at Ramaiah Institute of Technology",
     aboutTitle: "Welcome to ISE Department",
-    aboutDescription: "The Information Science and Engineering department is committed to providing cutting-edge education in computer science, data analytics, artificial intelligence, and emerging technologies. We nurture innovation, research excellence, and industry-ready graduates."
+    aboutDescription: "The Information Science and Engineering department is committed to providing cutting-edge education in computer science, data analytics, artificial intelligence, and emerging technologies."
   });
 
   useEffect(() => {
-    const savedAnnouncements = localStorage.getItem("announcements");
-    const savedHomeContent = localStorage.getItem("homeContent");
-    
-    if (savedAnnouncements) {
-      setAnnouncements(JSON.parse(savedAnnouncements));
-    }
-    if (savedHomeContent) {
-      setHomeContent(JSON.parse(savedHomeContent));
-    }
+    const loadData = async () => {
+      try {
+        const data = await homeAPI.get();
+        if (data.content) {
+          setHomeContent({
+            heroTitle: data.content.hero_title || homeContent.heroTitle,
+            heroSubtitle: data.content.hero_subtitle || homeContent.heroSubtitle,
+            aboutTitle: data.content.about_title || homeContent.aboutTitle,
+            aboutDescription: data.content.about_description || homeContent.aboutDescription,
+          });
+        }
+        if (data.announcements) {
+          setAnnouncements(data.announcements);
+        }
+      } catch (error) {
+        console.error("Failed to load home data:", error);
+      }
+    };
+    loadData();
   }, []);
 
   const quickLinks = [
@@ -147,7 +138,7 @@ const Home = () => {
                 <Card key={announcement.id} className="glass-card hover-lift">
                   <CardHeader>
                     <div className="text-sm text-accent font-medium mb-2">
-                      {announcement.date}
+                      {announcement.created_at ? new Date(announcement.created_at).toLocaleDateString() : ''}
                     </div>
                     <CardTitle className="text-lg">{announcement.title}</CardTitle>
                   </CardHeader>

@@ -9,24 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Plus, Trash2, Edit, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { homeAPI, announcementsAPI, aboutAPI, facultyAPI, resourcesAPI, eventsAPI, bosAPI, boeAPI, achievementsAPI, activitiesAPI } from "@/services/api";
 
 interface Announcement {
-  id: string;
+  id: number;
   title: string;
-  date: string;
   description: string;
+  created_at?: string;
 }
 
 interface FacultyMember {
-  id: string;
+  id: number;
   name: string;
   designation: string;
   qualification: string;
   specialization: string;
+  email: string;
+  phone: string;
 }
 
 interface Resource {
-  id: string;
+  id: number;
   title: string;
   description: string;
   link: string;
@@ -34,32 +37,39 @@ interface Resource {
 }
 
 interface Event {
-  id: string;
+  id: number;
   title: string;
-  date: string;
-  time: string;
-  venue: string;
-  type: string;
-  attendees: string;
   description: string;
-  status: string;
+  event_date: string;
+  location: string;
 }
 
 interface BOSMember {
-  id: string;
+  id: number;
   name: string;
   designation: string;
-  affiliation: string;
-  type: string;
+  organization: string;
+}
+
+interface BOEMember {
+  id: number;
+  name: string;
+  designation: string;
+  organization: string;
 }
 
 interface Achievement {
-  id: string;
+  id: number;
   title: string;
-  student: string;
-  year: string;
   description: string;
   category: string;
+}
+
+interface Activity {
+  id: number;
+  title: string;
+  description: string;
+  activity_date: string;
 }
 
 interface HomeContent {
@@ -83,7 +93,9 @@ const AdminDashboard = () => {
   const [resources, setResources] = useState<Resource[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [bosMembers, setBosMembers] = useState<BOSMember[]>([]);
+  const [boeMembers, setBoeMembers] = useState<BOEMember[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [homeContent, setHomeContent] = useState<HomeContent>({
     heroTitle: "Information Science & Engineering",
     heroSubtitle: "Department of ISE at Ramaiah Institute of Technology",
@@ -103,24 +115,63 @@ const AdminDashboard = () => {
       return;
     }
 
-    const savedAnnouncements = localStorage.getItem("announcements");
-    const savedFaculty = localStorage.getItem("faculty");
-    const savedResources = localStorage.getItem("resources");
-    const savedEvents = localStorage.getItem("events");
-    const savedBosMembers = localStorage.getItem("bosMembers");
-    const savedAchievements = localStorage.getItem("achievements");
-    const savedHomeContent = localStorage.getItem("homeContent");
-    const savedAboutContent = localStorage.getItem("aboutContent");
-    
-    if (savedAnnouncements) setAnnouncements(JSON.parse(savedAnnouncements));
-    if (savedFaculty) setFaculty(JSON.parse(savedFaculty));
-    if (savedResources) setResources(JSON.parse(savedResources));
-    if (savedEvents) setEvents(JSON.parse(savedEvents));
-    if (savedBosMembers) setBosMembers(JSON.parse(savedBosMembers));
-    if (savedAchievements) setAchievements(JSON.parse(savedAchievements));
-    if (savedHomeContent) setHomeContent(JSON.parse(savedHomeContent));
-    if (savedAboutContent) setAboutContent(JSON.parse(savedAboutContent));
+    loadData();
   }, [navigate]);
+
+  const loadData = async () => {
+    try {
+      const [
+        homeData,
+        announcementsData,
+        aboutData,
+        facultyData,
+        resourcesData,
+        eventsData,
+        bosData,
+        boeData,
+        achievementsData,
+        activitiesData
+      ] = await Promise.all([
+        homeAPI.get(),
+        announcementsAPI.getAll(),
+        aboutAPI.get(),
+        facultyAPI.getAll(),
+        resourcesAPI.getAll(),
+        eventsAPI.getAll(),
+        bosAPI.getAll(),
+        boeAPI.getAll(),
+        achievementsAPI.getAll(),
+        activitiesAPI.getAll()
+      ]);
+
+      if (homeData.content) setHomeContent({
+        heroTitle: homeData.content.hero_title || "",
+        heroSubtitle: homeData.content.hero_subtitle || "",
+        aboutTitle: homeData.content.about_title || "",
+        aboutDescription: homeData.content.about_description || "",
+      });
+      setAnnouncements(announcementsData);
+      if (aboutData) setAboutContent({
+        vision: aboutData.vision || "",
+        mission: aboutData.mission || "",
+        departmentProfile: aboutData.department_profile || "",
+      });
+      setFaculty(facultyData);
+      setResources(resourcesData);
+      setEvents(eventsData);
+      setBosMembers(bosData);
+      setBoeMembers(boeData);
+      setAchievements(achievementsData);
+      setActivities(activitiesData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load data from server",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("hodAuthenticated");
@@ -131,207 +182,335 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
-  const handleAddAnnouncement = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddAnnouncement = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAnnouncement: Announcement = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string,
-      date: formData.get("date") as string,
-      description: formData.get("description") as string,
-    };
     
-    const updatedAnnouncements = [...announcements, newAnnouncement];
-    setAnnouncements(updatedAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(updatedAnnouncements));
-    
-    toast({
-      title: "Success",
-      description: "Announcement added successfully",
-    });
-    e.currentTarget.reset();
+    try {
+      await announcementsAPI.create({
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+      });
+      
+      await loadData();
+      toast({
+        title: "Success",
+        description: "Announcement added successfully",
+      });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add announcement",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteAnnouncement = (id: string) => {
-    const updatedAnnouncements = announcements.filter(a => a.id !== id);
-    setAnnouncements(updatedAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(updatedAnnouncements));
-    
-    toast({
-      title: "Deleted",
-      description: "Announcement deleted successfully",
-    });
+  const handleDeleteAnnouncement = async (id: number) => {
+    try {
+      await announcementsAPI.delete(id);
+      await loadData();
+      toast({
+        title: "Deleted",
+        description: "Announcement deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddFaculty = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddFaculty = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newFaculty: FacultyMember = {
-      id: Date.now().toString(),
-      name: formData.get("name") as string,
-      designation: formData.get("designation") as string,
-      qualification: formData.get("qualification") as string,
-      specialization: formData.get("specialization") as string,
-    };
     
-    const updatedFaculty = [...faculty, newFaculty];
-    setFaculty(updatedFaculty);
-    localStorage.setItem("faculty", JSON.stringify(updatedFaculty));
-    
-    toast({
-      title: "Success",
-      description: "Faculty member added successfully",
-    });
-    e.currentTarget.reset();
+    try {
+      await facultyAPI.create({
+        name: formData.get("name") as string,
+        designation: formData.get("designation") as string,
+        qualification: formData.get("qualification") as string,
+        specialization: formData.get("specialization") as string,
+        email: formData.get("email") as string,
+        phone: formData.get("phone") as string,
+      });
+      
+      await loadData();
+      toast({
+        title: "Success",
+        description: "Faculty member added successfully",
+      });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add faculty member",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteFaculty = (id: string) => {
-    const updatedFaculty = faculty.filter(f => f.id !== id);
-    setFaculty(updatedFaculty);
-    localStorage.setItem("faculty", JSON.stringify(updatedFaculty));
-    
-    toast({
-      title: "Deleted",
-      description: "Faculty member deleted successfully",
-    });
+  const handleDeleteFaculty = async (id: number) => {
+    try {
+      await facultyAPI.delete(id);
+      await loadData();
+      toast({
+        title: "Deleted",
+        description: "Faculty member deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete faculty member",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddResource = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddResource = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newResource: Resource = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string,
-      description: formData.get("description") as string,
-      link: formData.get("link") as string,
-      icon: formData.get("icon") as string,
-    };
     
-    const updatedResources = [...resources, newResource];
-    setResources(updatedResources);
-    localStorage.setItem("resources", JSON.stringify(updatedResources));
-    
-    toast({ title: "Success", description: "Resource added successfully" });
-    e.currentTarget.reset();
+    try {
+      await resourcesAPI.create({
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        link: formData.get("link") as string,
+        icon: formData.get("icon") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "Resource added successfully" });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add resource",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteResource = (id: string) => {
-    const updatedResources = resources.filter(r => r.id !== id);
-    setResources(updatedResources);
-    localStorage.setItem("resources", JSON.stringify(updatedResources));
-    toast({ title: "Deleted", description: "Resource deleted successfully" });
+  const handleDeleteResource = async (id: number) => {
+    try {
+      await resourcesAPI.delete(id);
+      await loadData();
+      toast({ title: "Deleted", description: "Resource deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete resource",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddEvent = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddEvent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string,
-      date: formData.get("date") as string,
-      time: formData.get("time") as string,
-      venue: formData.get("venue") as string,
-      type: formData.get("type") as string,
-      attendees: formData.get("attendees") as string,
-      description: formData.get("description") as string,
-      status: formData.get("status") as string,
-    };
     
-    const updatedEvents = [...events, newEvent];
-    setEvents(updatedEvents);
-    localStorage.setItem("events", JSON.stringify(updatedEvents));
-    
-    toast({ title: "Success", description: "Event added successfully" });
-    e.currentTarget.reset();
+    try {
+      await eventsAPI.create({
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        event_date: formData.get("event_date") as string,
+        location: formData.get("location") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "Event added successfully" });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add event",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteEvent = (id: string) => {
-    const updatedEvents = events.filter(e => e.id !== id);
-    setEvents(updatedEvents);
-    localStorage.setItem("events", JSON.stringify(updatedEvents));
-    toast({ title: "Deleted", description: "Event deleted successfully" });
+  const handleDeleteEvent = async (id: number) => {
+    try {
+      await eventsAPI.delete(id);
+      await loadData();
+      toast({ title: "Deleted", description: "Event deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddBOSMember = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddBOSMember = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newMember: BOSMember = {
-      id: Date.now().toString(),
-      name: formData.get("name") as string,
-      designation: formData.get("designation") as string,
-      affiliation: formData.get("affiliation") as string,
-      type: formData.get("type") as string,
-    };
+    const memberType = formData.get("type") as string;
     
-    const updatedMembers = [...bosMembers, newMember];
-    setBosMembers(updatedMembers);
-    localStorage.setItem("bosMembers", JSON.stringify(updatedMembers));
-    
-    toast({ title: "Success", description: "Member added successfully" });
-    e.currentTarget.reset();
+    try {
+      const memberData = {
+        name: formData.get("name") as string,
+        designation: formData.get("designation") as string,
+        organization: formData.get("organization") as string,
+      };
+
+      if (memberType === "BOS") {
+        await bosAPI.create(memberData);
+      } else {
+        await boeAPI.create(memberData);
+      }
+      
+      await loadData();
+      toast({ title: "Success", description: "Member added successfully" });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add member",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteBOSMember = (id: string) => {
-    const updatedMembers = bosMembers.filter(m => m.id !== id);
-    setBosMembers(updatedMembers);
-    localStorage.setItem("bosMembers", JSON.stringify(updatedMembers));
-    toast({ title: "Deleted", description: "Member deleted successfully" });
+  const handleDeleteBOSMember = async (id: number, type: string) => {
+    try {
+      if (type === "BOS") {
+        await bosAPI.delete(id);
+      } else {
+        await boeAPI.delete(id);
+      }
+      await loadData();
+      toast({ title: "Deleted", description: "Member deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete member",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddAchievement = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddAchievement = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const newAchievement: Achievement = {
-      id: Date.now().toString(),
-      title: formData.get("title") as string,
-      student: formData.get("student") as string,
-      year: formData.get("year") as string,
-      description: formData.get("description") as string,
-      category: formData.get("category") as string,
-    };
     
-    const updatedAchievements = [...achievements, newAchievement];
-    setAchievements(updatedAchievements);
-    localStorage.setItem("achievements", JSON.stringify(updatedAchievements));
-    
-    toast({ title: "Success", description: "Achievement added successfully" });
-    e.currentTarget.reset();
+    try {
+      await achievementsAPI.create({
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        category: formData.get("category") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "Achievement added successfully" });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add achievement",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteAchievement = (id: string) => {
-    const updatedAchievements = achievements.filter(a => a.id !== id);
-    setAchievements(updatedAchievements);
-    localStorage.setItem("achievements", JSON.stringify(updatedAchievements));
-    toast({ title: "Deleted", description: "Achievement deleted successfully" });
+  const handleDeleteAchievement = async (id: number) => {
+    try {
+      await achievementsAPI.delete(id);
+      await loadData();
+      toast({ title: "Deleted", description: "Achievement deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete achievement",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateHomeContent = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddActivity = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const updated: HomeContent = {
-      heroTitle: formData.get("heroTitle") as string,
-      heroSubtitle: formData.get("heroSubtitle") as string,
-      aboutTitle: formData.get("aboutTitle") as string,
-      aboutDescription: formData.get("aboutDescription") as string,
-    };
     
-    setHomeContent(updated);
-    localStorage.setItem("homeContent", JSON.stringify(updated));
-    toast({ title: "Success", description: "Home page updated successfully" });
+    try {
+      await activitiesAPI.create({
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        activity_date: formData.get("activity_date") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "Activity added successfully" });
+      e.currentTarget.reset();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add activity",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleUpdateAboutContent = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDeleteActivity = async (id: number) => {
+    try {
+      await activitiesAPI.delete(id);
+      await loadData();
+      toast({ title: "Deleted", description: "Activity deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete activity",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateHomeContent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const updated: AboutContent = {
-      vision: formData.get("vision") as string,
-      mission: formData.get("mission") as string,
-      departmentProfile: formData.get("departmentProfile") as string,
-    };
     
-    setAboutContent(updated);
-    localStorage.setItem("aboutContent", JSON.stringify(updated));
-    toast({ title: "Success", description: "About page updated successfully" });
+    try {
+      await homeAPI.update({
+        heroTitle: formData.get("heroTitle") as string,
+        heroSubtitle: formData.get("heroSubtitle") as string,
+        aboutTitle: formData.get("aboutTitle") as string,
+        aboutDescription: formData.get("aboutDescription") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "Home page updated successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update home page",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateAboutContent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await aboutAPI.update({
+        vision: formData.get("vision") as string,
+        mission: formData.get("mission") as string,
+        departmentProfile: formData.get("departmentProfile") as string,
+      });
+      
+      await loadData();
+      toast({ title: "Success", description: "About page updated successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update about page",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -479,7 +658,7 @@ const AdminDashboard = () => {
                       <div key={announcement.id} className="flex justify-between items-start p-4 border rounded-lg">
                         <div>
                           <h3 className="font-semibold">{announcement.title}</h3>
-                          <p className="text-sm text-muted-foreground">{announcement.date}</p>
+                          <p className="text-sm text-muted-foreground">{announcement.created_at ? new Date(announcement.created_at).toLocaleDateString() : ''}</p>
                           <p className="mt-2">{announcement.description}</p>
                         </div>
                         <Button
@@ -633,39 +812,17 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleAddEvent} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="e-title">Title</Label>
-                      <Input id="e-title" name="title" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="e-type">Type</Label>
-                      <Input id="e-type" name="type" placeholder="Workshop, Conference, etc." required />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="e-title">Title</Label>
+                    <Input id="e-title" name="title" required />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="e-date">Date</Label>
-                      <Input id="e-date" name="date" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="e-time">Time</Label>
-                      <Input id="e-time" name="time" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="e-venue">Venue</Label>
-                      <Input id="e-venue" name="venue" required />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="e-date">Event Date</Label>
+                    <Input id="e-date" name="event_date" type="date" required />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="e-attendees">Expected Attendees</Label>
-                      <Input id="e-attendees" name="attendees" placeholder="100+" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="e-status">Status</Label>
-                      <Input id="e-status" name="status" placeholder="upcoming/past" required />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="e-location">Location</Label>
+                    <Input id="e-location" name="location" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="e-description">Description</Label>
@@ -692,9 +849,8 @@ const AdminDashboard = () => {
                       <div key={event.id} className="flex justify-between items-start p-4 border rounded-lg">
                         <div>
                           <h3 className="font-semibold">{event.title}</h3>
-                          <p className="text-sm text-muted-foreground">{event.date} | {event.venue}</p>
+                          <p className="text-sm text-muted-foreground">{new Date(event.event_date).toLocaleDateString()} | {event.location}</p>
                           <p className="text-sm mt-1">{event.description}</p>
-                          <span className="text-xs text-accent">{event.status}</span>
                         </div>
                         <Button variant="destructive" size="sm" onClick={() => handleDeleteEvent(event.id)}>
                           <Trash2 className="h-4 w-4" />
@@ -742,11 +898,11 @@ const AdminDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Current Members</CardTitle>
+                <CardTitle>BOS Members</CardTitle>
               </CardHeader>
               <CardContent>
                 {bosMembers.length === 0 ? (
-                  <p className="text-muted-foreground">No members yet</p>
+                  <p className="text-muted-foreground">No BOS members yet</p>
                 ) : (
                   <div className="space-y-4">
                     {bosMembers.map((member) => (
@@ -754,10 +910,35 @@ const AdminDashboard = () => {
                         <div>
                           <h3 className="font-semibold">{member.name}</h3>
                           <p className="text-sm text-accent">{member.designation}</p>
-                          <p className="text-sm text-muted-foreground">{member.affiliation}</p>
-                          <span className="text-xs text-muted-foreground">{member.type}</span>
+                          <p className="text-sm text-muted-foreground">{member.organization}</p>
                         </div>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBOSMember(member.id)}>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBOSMember(member.id, "BOS")}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>BOE Members</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {boeMembers.length === 0 ? (
+                  <p className="text-muted-foreground">No BOE members yet</p>
+                ) : (
+                  <div className="space-y-4">
+                    {boeMembers.map((member) => (
+                      <div key={member.id} className="flex justify-between items-start p-4 border rounded-lg">
+                        <div>
+                          <h3 className="font-semibold">{member.name}</h3>
+                          <p className="text-sm text-accent">{member.designation}</p>
+                          <p className="text-sm text-muted-foreground">{member.organization}</p>
+                        </div>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBOSMember(member.id, "BOE")}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -780,16 +961,6 @@ const AdminDashboard = () => {
                   <div className="space-y-2">
                     <Label htmlFor="a-title">Title</Label>
                     <Input id="a-title" name="title" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="a-student">Student/Team Name</Label>
-                      <Input id="a-student" name="student" required />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="a-year">Year</Label>
-                      <Input id="a-year" name="year" required />
-                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="a-category">Category</Label>
@@ -820,7 +991,6 @@ const AdminDashboard = () => {
                       <div key={achievement.id} className="flex justify-between items-start p-4 border rounded-lg">
                         <div>
                           <h3 className="font-semibold">{achievement.title}</h3>
-                          <p className="text-sm text-muted-foreground">{achievement.student} - {achievement.year}</p>
                           <p className="text-sm mt-1">{achievement.description}</p>
                           <span className="text-xs text-accent">{achievement.category}</span>
                         </div>

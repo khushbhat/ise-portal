@@ -1,79 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { facultyAPI } from "@/services/api";
 
 const Faculty = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [facultyMembers, setFacultyMembers] = useState<any[]>([]);
 
-  const facultyMembers = [
-    {
-      name: "Dr. Rajesh Kumar",
-      designation: "Professor & Head of Department",
-      specialization: "Artificial Intelligence, Machine Learning",
-      email: "rajesh.kumar@college.edu",
-      phone: "+91 80 1234 5001",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Priya Sharma",
-      designation: "Professor",
-      specialization: "Data Science, Big Data Analytics",
-      email: "priya.sharma@college.edu",
-      phone: "+91 80 1234 5002",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Amit Patel",
-      designation: "Associate Professor",
-      specialization: "Cybersecurity, Network Security",
-      email: "amit.patel@college.edu",
-      phone: "+91 80 1234 5003",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Sneha Reddy",
-      designation: "Associate Professor",
-      specialization: "Cloud Computing, Distributed Systems",
-      email: "sneha.reddy@college.edu",
-      phone: "+91 80 1234 5004",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Vikram Singh",
-      designation: "Assistant Professor",
-      specialization: "IoT, Embedded Systems",
-      email: "vikram.singh@college.edu",
-      phone: "+91 80 1234 5005",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Meera Krishnan",
-      designation: "Assistant Professor",
-      specialization: "Computer Vision, Image Processing",
-      email: "meera.krishnan@college.edu",
-      phone: "+91 80 1234 5006",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Arjun Nair",
-      designation: "Assistant Professor",
-      specialization: "Natural Language Processing, Deep Learning",
-      email: "arjun.nair@college.edu",
-      phone: "+91 80 1234 5007",
-      image: "/placeholder.svg",
-    },
-    {
-      name: "Dr. Kavita Desai",
-      designation: "Assistant Professor",
-      specialization: "Software Engineering, Agile Methodologies",
-      email: "kavita.desai@college.edu",
-      phone: "+91 80 1234 5008",
-      image: "/placeholder.svg",
-    },
-  ];
+  useEffect(() => {
+    const loadFaculty = async () => {
+      try {
+        const data = await facultyAPI.getAll();
+        setFacultyMembers(data);
+      } catch (error) {
+        console.error("Failed to load faculty:", error);
+      }
+    };
+    loadFaculty();
+  }, []);
 
   const filteredFaculty = facultyMembers.filter(
     (faculty) =>
@@ -128,6 +75,7 @@ const Faculty = () => {
                 </Avatar>
                 <CardTitle className="text-xl mb-1">{faculty.name}</CardTitle>
                 <p className="text-sm text-secondary font-medium mb-3">{faculty.designation}</p>
+                <p className="text-sm text-muted-foreground">{faculty.qualification}</p>
                 <p className="text-sm text-muted-foreground">{faculty.specialization}</p>
               </div>
             </CardHeader>
