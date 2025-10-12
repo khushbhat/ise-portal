@@ -2,16 +2,39 @@
 CREATE DATABASE IF NOT EXISTS ise_department;
 USE ise_department;
 
--- Admins table
+-- Admin table (HoD)
 CREATE TABLE IF NOT EXISTS admins (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) NOT NULL UNIQUE,
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'hod',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin (password: admin123)
-INSERT INTO admins (email, password) VALUES ('hod@rit.edu', 'admin123');
+-- Faculty users table
+CREATE TABLE IF NOT EXISTS faculty_users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  faculty_id INT,
+  role VARCHAR(50) DEFAULT 'faculty',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (faculty_id) REFERENCES faculty(id) ON DELETE SET NULL
+);
+
+-- Settings table for admin configurations
+CREATE TABLE IF NOT EXISTS settings (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  setting_key VARCHAR(255) UNIQUE NOT NULL,
+  setting_value TEXT,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert default admin (HoD) - password: hod123
+INSERT INTO admins (email, password, role) VALUES ('hod@rit.edu', 'hod123', 'hod');
+
+-- Insert default contact email setting
+INSERT INTO settings (setting_key, setting_value) VALUES ('contact_email', 'hod@rit.edu');
 
 -- Home content table
 CREATE TABLE IF NOT EXISTS home_content (
@@ -52,7 +75,7 @@ INSERT INTO about_content (id, vision, mission, department_profile) VALUES
 'The Department of Information Science & Engineering at Ramaiah Institute of Technology was established to meet the growing demand for skilled IT professionals. The department offers undergraduate and postgraduate programs with state-of-the-art infrastructure and experienced faculty.'
 );
 
--- Faculty table
+-- Faculty table (with extended bio fields)
 CREATE TABLE IF NOT EXISTS faculty (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -61,6 +84,15 @@ CREATE TABLE IF NOT EXISTS faculty (
   specialization TEXT,
   email VARCHAR(255),
   phone VARCHAR(50),
+  image TEXT,
+  is_hod BOOLEAN DEFAULT FALSE,
+  education TEXT,
+  subjects_taught TEXT,
+  funded_projects TEXT,
+  honours_achievements TEXT,
+  memberships TEXT,
+  patents TEXT,
+  workshops_attended TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -33,21 +33,106 @@ pool.getConnection()
 
 // ==================== AUTH ROUTES ====================
 app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
   
   try {
-    const [rows] = await pool.query(
-      'SELECT * FROM admins WHERE email = ? AND password = ?',
-      [email, password]
-    );
+    let query, params;
+    if (role === 'hod') {
+      query = 'SELECT * FROM admins WHERE email = ? AND password = ? AND role = ?';
+      params = [email, password, 'hod'];
+    } else {
+      query = 'SELECT fu.*, f.name, f.designation FROM faculty_users fu LEFT JOIN faculty f ON fu.faculty_id = f.id WHERE fu.email = ? AND fu.password = ?';
+      params = [email, password];
+    }
+    
+    const [rows] = await pool.query(query, params);
     
     if (rows.length > 0) {
-      res.json({ success: true, message: 'Login successful' });
+      res.json({ success: true, user: rows[0], role: role || 'faculty' });
     } else {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==================== FACULTY USERS MANAGEMENT ====================
+app.get('/api/faculty-users', async (req, res) => {
+  try {
+    const [users] = await pool.query(`
+      SELECT fu.*, f.name, f.designation 
+      FROM faculty_users fu 
+      LEFT JOIN faculty f ON fu.faculty_id = f.id
+      ORDER BY fu.created_at DESC
+    `);
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/faculty-users', async (req, res) => {
+  const { email, password, faculty_id } = req.body;
+  
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO faculty_users (email, password, faculty_id, role) VALUES (?, ?, ?, ?)',
+      [email, password, faculty_id, 'faculty']
+    );
+    res.json({ success: true, id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/faculty-users/:id', async (req, res) => {
+  const { email, password, faculty_id } = req.body;
+  
+  try {
+    await pool.query(
+      'UPDATE faculty_users SET email = ?, password = ?, faculty_id = ? WHERE id = ?',
+      [email, password, faculty_id, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/faculty-users/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM faculty_users WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== SETTINGS MANAGEMENT ====================
+app.get('/api/settings/:key', async (req, res) => {
+  try {
+    const [settings] = await pool.query(
+      'SELECT setting_value FROM settings WHERE setting_key = ?',
+      [req.params.key]
+    );
+    res.json(settings[0] || { setting_value: '' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/settings/:key', async (req, res) => {
+  const { value } = req.body;
+  
+  try {
+    await pool.query(
+      'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+      [req.params.key, value, value]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -154,13 +239,27 @@ app.get('/api/faculty', async (req, res) => {
   }
 });
 
+app.get('/api/faculty/:id', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM faculty WHERE id = ?', [req.params.id]);
+    res.json(rows[0] || {});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/faculty', async (req, res) => {
-  const { name, designation, qualification, specialization, email, phone } = req.body;
+  const { name, designation, qualification, specialization, email, phone, image, is_hod } = req.body;
   
   try {
+    // If setting as HoD, remove HoD status from others
+    if (is_hod) {
+      await pool.query('UPDATE faculty SET is_hod = FALSE');
+    }
+    
     const [result] = await pool.query(
-      'INSERT INTO faculty (name, designation, qualification, specialization, email, phone) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, designation, qualification, specialization, email, phone]
+      'INSERT INTO faculty (name, designation, qualification, specialization, email, phone, image, is_hod) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, designation, qualification, specialization, email, phone, image, is_hod || false]
     );
     
     res.json({ success: true, id: result.insertId });
@@ -170,12 +269,24 @@ app.post('/api/faculty', async (req, res) => {
 });
 
 app.put('/api/faculty/:id', async (req, res) => {
-  const { name, designation, qualification, specialization, email, phone } = req.body;
+  const { name, designation, qualification, specialization, email, phone, image, is_hod, education, subjects_taught, funded_projects, honours_achievements, memberships, patents, workshops_attended } = req.body;
   
   try {
+    // If setting as HoD, remove HoD status from others
+    if (is_hod) {
+      await pool.query('UPDATE faculty SET is_hod = FALSE WHERE id != ?', [req.params.id]);
+    }
+    
     await pool.query(
-      'UPDATE faculty SET name = ?, designation = ?, qualification = ?, specialization = ?, email = ?, phone = ? WHERE id = ?',
-      [name, designation, qualification, specialization, email, phone, req.params.id]
+      `UPDATE faculty SET 
+        name = ?, designation = ?, qualification = ?, specialization = ?, 
+        email = ?, phone = ?, image = ?, is_hod = ?,
+        education = ?, subjects_taught = ?, funded_projects = ?, 
+        honours_achievements = ?, memberships = ?, patents = ?, workshops_attended = ?
+      WHERE id = ?`,
+      [name, designation, qualification, specialization, email, phone, image, is_hod || false,
+       education, subjects_taught, funded_projects, honours_achievements, memberships, patents, workshops_attended,
+       req.params.id]
     );
     
     res.json({ success: true });
@@ -536,6 +647,7 @@ app.delete('/api/resources/:id', async (req, res) => {
   }
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

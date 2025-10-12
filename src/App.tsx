@@ -17,6 +17,8 @@ import BOSandBOE from "./pages/BOSandBOE";
 import Activities from "./pages/Activities";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import FacultyLogin from "./pages/FacultyLogin";
+import FacultyDashboard from "./pages/FacultyDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
               <Route path="/activities" element={<Activities />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin" element={<FacultyLogin />} />
+              <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

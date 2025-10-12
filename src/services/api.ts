@@ -24,12 +24,37 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
 // Auth API
 export const authAPI = {
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string, role: 'hod' | 'faculty' = 'hod') => {
     return apiCall('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     });
   },
+};
+
+// Faculty Users API
+export const facultyUsersAPI = {
+  getAll: async () => apiCall('/faculty-users'),
+  create: async (data: any) => apiCall('/faculty-users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: async (id: number, data: any) => apiCall(`/faculty-users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: async (id: number) => apiCall(`/faculty-users/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Settings API
+export const settingsAPI = {
+  get: async (key: string) => apiCall(`/settings/${key}`),
+  update: async (key: string, value: string) => apiCall(`/settings/${key}`, {
+    method: 'PUT',
+    body: JSON.stringify({ value }),
+  }),
 };
 
 // Home API
@@ -65,6 +90,7 @@ export const aboutAPI = {
 // Faculty API
 export const facultyAPI = {
   getAll: async () => apiCall('/faculty'),
+  getById: async (id: number) => apiCall(`/faculty/${id}`),
   create: async (data: any) => apiCall('/faculty', {
     method: 'POST',
     body: JSON.stringify(data),
