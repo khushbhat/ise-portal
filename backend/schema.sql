@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS faculty (
   phone VARCHAR(50),
   image TEXT,
   is_hod BOOLEAN DEFAULT FALSE,
+  brief_info TEXT,
   education TEXT,
   subjects_taught TEXT,
   funded_projects TEXT,
@@ -103,7 +104,18 @@ CREATE TABLE IF NOT EXISTS research (
   author VARCHAR(255),
   publication VARCHAR(255),
   year INT,
+  reference TEXT,
   description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Contact queries table
+CREATE TABLE IF NOT EXISTS contact_queries (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  subject VARCHAR(255),
+  message TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

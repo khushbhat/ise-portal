@@ -229,11 +229,54 @@ app.put('/api/about', async (req, res) => {
   }
 });
 
+// ==================== CONTACT QUERY ROUTES ====================
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  try {
+    const [result] = await pool.query(
+      'INSERT INTO contact_queries (name, email, subject, message) VALUES (?, ?, ?, ?)',
+      [name, email, subject, message]
+    );
+
+    res.json({ success: true, id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/contact', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM contact_queries ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/contact/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM contact_queries WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== FACULTY ROUTES ====================
 app.get('/api/faculty', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM faculty ORDER BY name');
+    const [rows] = await pool.query('SELECT * FROM faculty ORDER BY is_hod DESC, name');
     res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/faculty/hod', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM faculty WHERE is_hod = TRUE LIMIT 1');
+    res.json(rows[0] || null);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -249,19 +292,19 @@ app.get('/api/faculty/:id', async (req, res) => {
 });
 
 app.post('/api/faculty', async (req, res) => {
-  const { name, designation, qualification, specialization, email, phone, image, is_hod } = req.body;
-  
+  const { name, designation, qualification, specialization, email, phone, image, is_hod, brief_info } = req.body;
+
   try {
     // If setting as HoD, remove HoD status from others
     if (is_hod) {
       await pool.query('UPDATE faculty SET is_hod = FALSE');
     }
-    
+
     const [result] = await pool.query(
-      'INSERT INTO faculty (name, designation, qualification, specialization, email, phone, image, is_hod) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, designation, qualification, specialization, email, phone, image, is_hod || false]
+      'INSERT INTO faculty (name, designation, qualification, specialization, email, phone, image, is_hod, brief_info) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, designation, qualification, specialization, email, phone, image, is_hod || false, brief_info]
     );
-    
+
     res.json({ success: true, id: result.insertId });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -269,26 +312,26 @@ app.post('/api/faculty', async (req, res) => {
 });
 
 app.put('/api/faculty/:id', async (req, res) => {
-  const { name, designation, qualification, specialization, email, phone, image, is_hod, education, subjects_taught, funded_projects, honours_achievements, memberships, patents, workshops_attended } = req.body;
-  
+  const { name, designation, qualification, specialization, email, phone, image, is_hod, brief_info, education, subjects_taught, funded_projects, honours_achievements, memberships, patents, workshops_attended } = req.body;
+
   try {
     // If setting as HoD, remove HoD status from others
     if (is_hod) {
       await pool.query('UPDATE faculty SET is_hod = FALSE WHERE id != ?', [req.params.id]);
     }
-    
+
     await pool.query(
-      `UPDATE faculty SET 
-        name = ?, designation = ?, qualification = ?, specialization = ?, 
-        email = ?, phone = ?, image = ?, is_hod = ?,
-        education = ?, subjects_taught = ?, funded_projects = ?, 
+      `UPDATE faculty SET
+        name = ?, designation = ?, qualification = ?, specialization = ?,
+        email = ?, phone = ?, image = ?, is_hod = ?, brief_info = ?,
+        education = ?, subjects_taught = ?, funded_projects = ?,
         honours_achievements = ?, memberships = ?, patents = ?, workshops_attended = ?
       WHERE id = ?`,
-      [name, designation, qualification, specialization, email, phone, image, is_hod || false,
+      [name, designation, qualification, specialization, email, phone, image, is_hod || false, brief_info,
        education, subjects_taught, funded_projects, honours_achievements, memberships, patents, workshops_attended,
        req.params.id]
     );
-    
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -315,14 +358,14 @@ app.get('/api/research', async (req, res) => {
 });
 
 app.post('/api/research', async (req, res) => {
-  const { title, author, publication, year, description } = req.body;
-  
+  const { title, author, publication, year, description, reference } = req.body;
+
   try {
     const [result] = await pool.query(
-      'INSERT INTO research (title, author, publication, year, description) VALUES (?, ?, ?, ?, ?)',
-      [title, author, publication, year, description]
+      'INSERT INTO research (title, author, publication, year, description, reference) VALUES (?, ?, ?, ?, ?, ?)',
+      [title, author, publication, year, description, reference]
     );
-    
+
     res.json({ success: true, id: result.insertId });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -330,14 +373,14 @@ app.post('/api/research', async (req, res) => {
 });
 
 app.put('/api/research/:id', async (req, res) => {
-  const { title, author, publication, year, description } = req.body;
-  
+  const { title, author, publication, year, description, reference } = req.body;
+
   try {
     await pool.query(
-      'UPDATE research SET title = ?, author = ?, publication = ?, year = ?, description = ? WHERE id = ?',
-      [title, author, publication, year, description, req.params.id]
+      'UPDATE research SET title = ?, author = ?, publication = ?, year = ?, description = ?, reference = ? WHERE id = ?',
+      [title, author, publication, year, description, reference, req.params.id]
     );
-    
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });

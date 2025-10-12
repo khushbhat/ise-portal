@@ -4,36 +4,73 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Lock } from "lucide-react";
+import { Lock, UserCog, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { authAPI } from "@/services/api";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [hodEmail, setHodEmail] = useState("");
+  const [hodPassword, setHodPassword] = useState("");
+  const [facultyEmail, setFacultyEmail] = useState("");
+  const [facultyPassword, setFacultyPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleHodLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simple local authentication - you can modify this logic
-    // For production, replace with actual authentication
-    const HOD_EMAIL = "hod@rit.edu";
-    const HOD_PASSWORD = "admin123"; // Change this to a secure password
-    
-    if (email === HOD_EMAIL && password === HOD_PASSWORD) {
-      localStorage.setItem("hodAuthenticated", "true");
-      toast({
-        title: "Login Successful",
-        description: "Welcome to the admin dashboard",
-      });
-      navigate("/admin/dashboard");
-    } else {
+    setIsLoading(true);
+
+    try {
+      const response = await authAPI.login(hodEmail, hodPassword, 'hod');
+
+      if (response.success) {
+        localStorage.setItem("hodAuthenticated", "true");
+        localStorage.setItem("userRole", "hod");
+        toast({
+          title: "Login Successful",
+          description: "Welcome to the HoD dashboard",
+        });
+        navigate("/admin/dashboard");
+      }
+    } catch (error) {
       toast({
         title: "Login Failed",
         description: "Invalid email or password",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacultyLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await authAPI.login(facultyEmail, facultyPassword, 'faculty');
+
+      if (response.success) {
+        localStorage.setItem("facultyAuthenticated", "true");
+        localStorage.setItem("userRole", "faculty");
+        localStorage.setItem("facultyId", response.user.faculty_id);
+        localStorage.setItem("facultyUserId", response.user.id);
+        toast({
+          title: "Login Successful",
+          description: "Welcome to the Faculty dashboard",
+        });
+        navigate("/admin/faculty-dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,39 +81,84 @@ const AdminLogin = () => {
           <div className="flex justify-center mb-4">
             <Lock className="h-12 w-12 text-accent" />
           </div>
-          <CardTitle className="text-2xl">HOD Admin Login</CardTitle>
+          <CardTitle className="text-2xl">Department Login</CardTitle>
           <CardDescription>
-            Access the department administration dashboard
+            Access your dashboard - HoD or Faculty
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="hod@rit.edu"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full bg-gradient-primary">
-              Login
-            </Button>
-          </form>
+          <Tabs defaultValue="hod" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="hod">
+                <UserCog className="mr-2 h-4 w-4" />
+                HoD
+              </TabsTrigger>
+              <TabsTrigger value="faculty">
+                <Users className="mr-2 h-4 w-4" />
+                Faculty
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="hod">
+              <form onSubmit={handleHodLogin} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hod-email">Email</Label>
+                  <Input
+                    id="hod-email"
+                    type="email"
+                    placeholder="hod@rit.edu"
+                    value={hodEmail}
+                    onChange={(e) => setHodEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="hod-password">Password</Label>
+                  <Input
+                    id="hod-password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={hodPassword}
+                    onChange={(e) => setHodPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
+                  {isLoading ? "Logging in..." : "Login as HoD"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="faculty">
+              <form onSubmit={handleFacultyLogin} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="faculty-email">Email</Label>
+                  <Input
+                    id="faculty-email"
+                    type="email"
+                    placeholder="faculty@rit.edu"
+                    value={facultyEmail}
+                    onChange={(e) => setFacultyEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="faculty-password">Password</Label>
+                  <Input
+                    id="faculty-password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={facultyPassword}
+                    onChange={(e) => setFacultyPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-gradient-primary" disabled={isLoading}>
+                  {isLoading ? "Logging in..." : "Login as Faculty"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

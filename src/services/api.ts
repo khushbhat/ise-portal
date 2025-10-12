@@ -91,6 +91,7 @@ export const aboutAPI = {
 export const facultyAPI = {
   getAll: async () => apiCall('/faculty'),
   getById: async (id: number) => apiCall(`/faculty/${id}`),
+  getHod: async () => apiCall('/faculty/hod'),
   create: async (data: any) => apiCall('/faculty', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -100,6 +101,18 @@ export const facultyAPI = {
     body: JSON.stringify(data),
   }),
   delete: async (id: number) => apiCall(`/faculty/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Contact API
+export const contactAPI = {
+  getAll: async () => apiCall('/contact'),
+  create: async (data: any) => apiCall('/contact', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  delete: async (id: number) => apiCall(`/contact/${id}`, {
     method: 'DELETE',
   }),
 };
