@@ -29,18 +29,61 @@ const FacultyDashboard = () => {
       return;
     }
 
-    const facultyId = localStorage.getItem("facultyId");
-    if (facultyId) {
-      loadFacultyData(parseInt(facultyId));
+    const facultyIdStr = localStorage.getItem("facultyId");
+    if (!facultyIdStr) {
+      toast({
+        title: "Error",
+        description: "Faculty ID not found. Please login again.",
+        variant: "destructive",
+      });
+      // redirect to login to re-authenticate
+      navigate("/admin");
+      return;
     }
+
+    const parsedId = parseInt(facultyIdStr, 10);
+    if (isNaN(parsedId)) {
+      toast({
+        title: "Error",
+        description: "Invalid faculty ID stored. Please login again.",
+        variant: "destructive",
+      });
+      // clear bad storage and redirect
+      localStorage.removeItem("facultyId");
+      localStorage.removeItem("facultyAuthenticated");
+      navigate("/admin");
+      return;
+    }
+
+    loadFacultyData(parsedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const loadFacultyData = async (id: number) => {
     try {
       const data = await facultyAPI.getById(id);
+      if (!data) {
+        toast({
+          title: "Error",
+          description: "No faculty data returned. Please check backend.",
+          variant: "destructive",
+        });
+        // Optionally navigate back to login
+        navigate("/admin");
+        return;
+      }
       setFaculty(data);
     } catch (error) {
       console.error("Failed to load faculty data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load faculty data. Please try logging in again.",
+        variant: "destructive",
+      });
+      // clear stored authentication to be safe
+      localStorage.removeItem("facultyAuthenticated");
+      localStorage.removeItem("facultyId");
+      navigate("/admin");
     }
   };
 
@@ -49,6 +92,7 @@ const FacultyDashboard = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("facultyId");
     localStorage.removeItem("facultyUserId");
+    localStorage.removeItem("token");
     navigate("/");
   };
 

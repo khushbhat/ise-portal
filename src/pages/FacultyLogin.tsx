@@ -23,11 +23,18 @@ const FacultyLogin = () => {
       if (response.success) {
         localStorage.setItem("hodAuthenticated", "true");
         localStorage.setItem("userRole", "hod");
+        if (response.token) localStorage.setItem("token", response.token);
         toast({
           title: "Success",
           description: "HoD login successful",
         });
         navigate("/admin/dashboard");
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Invalid HoD credentials",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({
@@ -42,23 +49,65 @@ const FacultyLogin = () => {
     e.preventDefault();
     try {
       const response = await authAPI.login(facultyEmail, facultyPassword, 'faculty');
+
+      // Debugging: if login doesn't work, inspect the response object
+      // console.log("Faculty login response:", response);
+
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
       if (response.success) {
+        // Normalize possible id keys returned by the server:
+        // backend might return response.user.id or response.user.faculty_id or response.user.facultyId
+        const userObj = response.user || {};
+        const facultyId =
+          userObj.faculty_id ?? userObj.facultyId ?? userObj.id ?? null;
+
+        if (!facultyId) {
+          // If we don't have an id, show a helpful error and do not navigate
+          toast({
+            title: "Error",
+            description: "Login succeeded but no faculty id returned by server. Check backend response.",
+            variant: "destructive",
+          });
+          // Keep a console log for debugging
+          // console.error("Faculty login response (missing id):", response);
+          return;
+        }
+
+        // Store values as strings in localStorage; parse on read.
         localStorage.setItem("facultyAuthenticated", "true");
         localStorage.setItem("userRole", "faculty");
-        localStorage.setItem("facultyId", response.user.faculty_id);
-        localStorage.setItem("facultyUserId", response.user.id);
+        localStorage.setItem("facultyId", String(facultyId));
+
+        // If backend returns a JWT token, store it for subsequent requests
+        if (response.token) {
+          localStorage.setItem("token", response.token);
+        }
+
+        // Also store any user-level id if provided (useful if backend separates user vs faculty objects)
+        if (userObj.id) localStorage.setItem("facultyUserId", String(userObj.id));
+
         toast({
           title: "Success",
           description: "Faculty login successful",
         });
         navigate("/faculty/dashboard");
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Invalid faculty credentials",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Invalid faculty credentials",
+        description: "Invalid faculty credentials or server error",
         variant: "destructive",
       });
+      console.error("Faculty login error:", error);
     }
   };
 

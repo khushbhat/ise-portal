@@ -45,34 +45,45 @@ const AdminLogin = () => {
     }
   };
 
-  const handleFacultyLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  // (only the handleFacultyLogin is shown with the minimal fix)
+const handleFacultyLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const response = await authAPI.login(facultyEmail, facultyPassword, 'faculty');
+  try {
+    const response = await authAPI.login(facultyEmail, facultyPassword, 'faculty');
 
-      if (response.success) {
-        localStorage.setItem("facultyAuthenticated", "true");
-        localStorage.setItem("userRole", "faculty");
-        localStorage.setItem("facultyId", response.user.faculty_id);
-        localStorage.setItem("facultyUserId", response.user.id);
-        toast({
-          title: "Login Successful",
-          description: "Welcome to the Faculty dashboard",
-        });
-        navigate("/admin/faculty-dashboard");
-      }
-    } catch (error) {
+    if (response.success) {
+      // store the same keys your FacultyDashboard expects
+      localStorage.setItem("facultyAuthenticated", "true");
+      localStorage.setItem("userRole", "faculty");
+
+      // normalize id keys if backend uses different names
+      const userObj = response.user || {};
+      const facultyId = userObj.faculty_id ?? userObj.facultyId ?? userObj.id ?? null;
+      if (facultyId) localStorage.setItem("facultyId", String(facultyId));
+      if (userObj.id) localStorage.setItem("facultyUserId", String(userObj.id));
+
+      if (response.token) localStorage.setItem("token", response.token);
+
       toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
-        variant: "destructive",
+        title: "Login Successful",
+        description: "Welcome to the Faculty dashboard",
       });
-    } finally {
-      setIsLoading(false);
+
+      // NAVIGATE TO THE ROUTE REGISTERED IN App.tsx
+      navigate("/faculty/dashboard");
     }
-  };
+  } catch (error) {
+    toast({
+      title: "Login Failed",
+      description: "Invalid email or password",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-hero px-4">
