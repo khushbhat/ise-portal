@@ -1,3 +1,5 @@
+import * as XLSX from 'xlsx';
+import { exportPublicationsToExcel } from "@/utils/excelExport";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +12,10 @@ import { LogOut, Plus, Trash2, Edit, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { homeAPI, announcementsAPI, aboutAPI, facultyAPI, resourcesAPI, eventsAPI, bosAPI, boeAPI, achievementsAPI, activitiesAPI } from "@/services/api";
+import { researchAPI } from "@/services/api";
+import { Download } from "lucide-react";
+import { facultyUsersAPI } from "@/services/api";
+import { useRef } from "react";
 
 interface Announcement {
   id: number;
@@ -85,6 +91,17 @@ interface AboutContent {
   departmentProfile: string;
 }
 
+interface Publication {
+  id: number;
+  title: string;
+  author: string;
+  publication: string;
+  year: number;
+  reference?: string;
+  description?: string;
+}
+
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -107,6 +124,18 @@ const AdminDashboard = () => {
     mission: "Department of Information Science and Engineering shall create high quality IT Engineering Professionals for the betterment of society.",
     departmentProfile: "The Department of Information Science and Engineering (ISE) was established in the year 1992..."
   });
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [selectedPublicationIds, setSelectedPublicationIds] = useState<number[]>([]);
+  const [searchPub, setSearchPub] = useState(""); // keyword search
+  const [newPublication, setNewPublication] = useState<Publication>({
+    id: 0,
+    title: "",
+    author: "",
+    publication: "",
+    year: new Date().getFullYear(),
+    reference: "",
+    description: "",
+  });
 
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("hodAuthenticated");
@@ -116,7 +145,17 @@ const AdminDashboard = () => {
     }
 
     loadData();
+    fetchPublications();
   }, [navigate]);
+
+  const fetchPublications = async () => {
+    try {
+      const pubs = await researchAPI.getAll();
+      setPublications(pubs);
+    } catch {
+      setPublications([]);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -182,6 +221,72 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
+    const handleAddPublication = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await researchAPI.create(newPublication);
+      setNewPublication({ id: 0, title: "", author: "", publication: "", year: new Date().getFullYear(), reference: "", description: "" });
+      await fetchPublications();
+      toast({ title: "Success", description: "Publication added." });
+    } catch {
+      toast({ title: "Error", description: "Failed to add publication.", variant: "destructive" });
+    }
+  };
+
+    const handleDeletePublication = async (id: number) => {
+    try {
+      await researchAPI.delete(id);
+      await fetchPublications();
+      toast({ title: "Deleted", description: "Publication deleted." });
+    } catch {
+      toast({ title: "Error", description: "Failed to delete publication.", variant: "destructive" });
+    }
+  };
+
+  // Select/deselect publication for export
+  const handleSelectPublication = (id: number) =>
+    setSelectedPublicationIds(ids =>
+      ids.includes(id) ? ids.filter(pid => pid !== id) : [...ids, id]
+    );
+
+  // Filtered publications
+  const filteredPublications = publications.filter(pub =>
+    [pub.title, pub.author, pub.publication, pub.reference, pub.description]
+      .join(" ")
+      .toLowerCase()
+      .includes(searchPub.trim().toLowerCase())
+  );
+
+  // Export selected/all as XLSX
+  const handleExportXLSX = () => {
+    const pubsToExport = filteredPublications.filter(pub => selectedPublicationIds.includes(pub.id));
+    exportPublicationsToExcel(pubsToExport.length > 0 ? pubsToExport : filteredPublications, "publications.xlsx");
+  };
+
+  // Export selected/all as CSV
+  const handleExportCSV = () => {
+    const pubsToExport = filteredPublications.filter(pub => selectedPublicationIds.includes(pub.id));
+    const pubs = pubsToExport.length > 0 ? pubsToExport : filteredPublications;
+    const csv = [
+      ["Year", "Title", "Authors", "Publication/Journal", "Reference", "Description"],
+      ...pubs.map(pub => [
+        pub.year,
+        `"${pub.title.replace(/"/g, '""')}"`,
+        `"${pub.author.replace(/"/g, '""')}"`,
+        `"${pub.publication.replace(/"/g, '""')}"`,
+        `"${pub.reference?.replace(/"/g, '""') || ""}"`,
+        `"${pub.description?.replace(/"/g, '""') || ""}"`
+      ])
+    ].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "publications.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleAddAnnouncement = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -223,35 +328,46 @@ const AdminDashboard = () => {
       });
     }
   };
-
-  const handleAddFaculty = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    
-    try {
-      await facultyAPI.create({
-        name: formData.get("name") as string,
-        designation: formData.get("designation") as string,
-        qualification: formData.get("qualification") as string,
-        specialization: formData.get("specialization") as string,
-        email: formData.get("email") as string,
-        phone: formData.get("phone") as string,
-      });
-      
-      await loadData();
-      toast({
-        title: "Success",
-        description: "Faculty member added successfully",
-      });
-      e.currentTarget.reset();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add faculty member",
-        variant: "destructive",
-      });
-    }
-  };
+    const addFacultyFormRef = useRef<HTMLFormElement>(null);
+    const handleAddFaculty = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
+      try {
+        const facultyProfile = {
+          name: formData.get("name"),
+          designation: formData.get("designation"),
+          qualification: formData.get("qualification"),
+          specialization: formData.get("specialization"),
+          email: formData.get("email"),
+          phone: formData.get("phone"),
+          // ...other optional fields
+          brief_info: formData.get("brief_info"),
+          education: formData.get("education"),
+          subjects_taught: formData.get("subjects_taught"),
+          funded_projects: formData.get("funded_projects"),
+          honours_achievements: formData.get("honours_achievements"),
+          memberships: formData.get("memberships"),
+          patents: formData.get("patents"),
+          workshops_attended: formData.get("workshops_attended")
+        };
+        const facultyRes = await facultyAPI.create(facultyProfile);
+        await facultyUsersAPI.create({
+          email: formData.get("email"),
+          password: formData.get("password"),
+          faculty_id: facultyRes.id,
+          role: "faculty"
+        });
+        await loadData();
+        toast({ title: "Success", description: "Faculty member added with login." });
+        if (addFacultyFormRef.current) addFacultyFormRef.current.reset();
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to add faculty and login.",
+          variant: "destructive"
+        });
+      }
+    };
 
   const handleDeleteFaculty = async (id: number) => {
     try {
@@ -550,6 +666,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="bos">BOS/BOE</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            <TabsTrigger value="research">Research</TabsTrigger>
           </TabsList>
 
           {/* Home Content */}
@@ -684,23 +801,41 @@ const AdminDashboard = () => {
                 <CardDescription>Add new faculty members to the department</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAddFaculty} className="space-y-4">
+                <form ref={addFacultyFormRef} onSubmit={handleAddFaculty} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Name *</Label>
                     <Input id="name" name="name" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="designation">Designation</Label>
+                    <Label htmlFor="designation">Designation *</Label>
                     <Input id="designation" name="designation" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="qualification">Qualification</Label>
+                    <Label htmlFor="qualification">Qualification *</Label>
                     <Input id="qualification" name="qualification" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="specialization">Specialization</Label>
+                    <Label htmlFor="specialization">Specialization *</Label>
                     <Input id="specialization" name="specialization" required />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Faculty Email *</Label>
+                    <Input id="email" name="email" type="email" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Faculty Password *</Label>
+                    <Input id="password" name="password" type="password" required />
+                  </div>
+                  {/* Optional fields */}
+                  <div className="space-y-2">
+                    <Label htmlFor="brief_info">Brief Info (optional)</Label>
+                    <Textarea id="brief_info" name="brief_info" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="education">Education (optional)</Label>
+                    <Textarea id="education" name="education" />
+                  </div>
+                  {/* ...other optional fields as before */}
                   <Button type="submit">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Faculty
@@ -719,17 +854,24 @@ const AdminDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {faculty.map((member) => (
-                      <div key={member.id} className="flex justify-between items-start p-4 border rounded-lg">
+                      <div
+                        key={member.id} 
+                        className="flex justify-between items-start p-4 border rounded-lg cursor-pointer"
+                        onClick={() => navigate(`/faculty/${member.id}`)}
+                        title={`View full bio of ${member.name}`}
+                      >
                         <div>
                           <h3 className="font-semibold">{member.name}</h3>
                           <p className="text-sm text-muted-foreground">{member.designation}</p>
                           <p className="text-sm mt-1">Qualification: {member.qualification}</p>
                           <p className="text-sm">Specialization: {member.specialization}</p>
+                          {/* ...other info as before */}
                         </div>
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteFaculty(member.id)}
+                          onClick={e => {e.stopPropagation(); handleDeleteFaculty(member.id);}}
+                          title="Delete Faculty"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -948,7 +1090,117 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
+          <TabsContent value="research" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Add New Research Publication</CardTitle>
+                <CardDescription>HoD can add publications here</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4" onSubmit={handleAddPublication}>
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={newPublication.title} onChange={e => setNewPublication({ ...newPublication, title: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Authors</Label>
+                    <Input value={newPublication.author} onChange={e => setNewPublication({ ...newPublication, author: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Publication/Journal</Label>
+                    <Input value={newPublication.publication} onChange={e => setNewPublication({ ...newPublication, publication: e.target.value })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Year</Label>
+                    <Input type="number" value={newPublication.year} onChange={e => setNewPublication({ ...newPublication, year: Number(e.target.value) })} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reference</Label>
+                    <Input value={newPublication.reference || ""} onChange={e => setNewPublication({ ...newPublication, reference: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea value={newPublication.description || ""} onChange={e => setNewPublication({ ...newPublication, description: e.target.value })} />
+                  </div>
+                  <Button type="submit">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Publication
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>All Research Publications</CardTitle>
+                <div className="flex flex-wrap gap-4 items-center mt-4">
+                  <Input
+                    type="text"
+                    value={searchPub}
+                    placeholder="Search by keyword, title, author..."
+                    onChange={e => setSearchPub(e.target.value)}
+                    className="w-64"
+                  />
+                  <Button variant="outline" onClick={handleExportXLSX}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export XLSX
+                  </Button>
+                  <Button variant="outline" onClick={handleExportCSV}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full table-auto">
+                    <thead>
+                      <tr>
+                        <th />
+                        <th>Year</th>
+                        <th>Title</th>
+                        <th>Authors</th>
+                        <th>Journal</th>
+                        <th>Reference</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPublications.map(pub => (
+                        <tr key={pub.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedPublicationIds.includes(pub.id)}
+                              onChange={() => handleSelectPublication(pub.id)}
+                            />
+                          </td>
+                          <td>{pub.year}</td>
+                          <td>{pub.title}</td>
+                          <td>{pub.author}</td>
+                          <td>{pub.publication}</td>
+                          <td>{pub.reference}</td>
+                          <td>{pub.description}</td>
+                          <td>
+                            <Button variant="destructive" size="sm" onClick={() => handleDeletePublication(pub.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredPublications.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="text-muted-foreground text-center py-8">
+                            No publications found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           {/* Achievements */}
           <TabsContent value="achievements" className="space-y-6">
             <Card>

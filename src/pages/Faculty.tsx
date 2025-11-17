@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { facultyAPI } from "@/services/api";
+import { useNavigate } from "react-router-dom";
 
 const Faculty = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [facultyMembers, setFacultyMembers] = useState<any[]>([]);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const loadFaculty = async () => {
       try {
@@ -36,7 +37,7 @@ const Faculty = () => {
       .join("")
       .toUpperCase();
   };
-
+const [selectedFaculty, setSelectedFaculty] = useState(null);
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Header */}
@@ -100,9 +101,49 @@ const Faculty = () => {
                   </a>
                 </div>
               </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate(`/faculty/${faculty.id}`)}
+                className="mt-4"
+              >
+                View Full Profile
+              </Button>
             </CardContent>
           </Card>
         ))}
+        {/* {selectedFaculty && (
+  <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+    <div className="bg-white rounded-lg max-w-xl w-full p-8 relative">
+      <Button
+        variant="ghost"
+        className="absolute top-4 right-4"
+        onClick={() => setSelectedFaculty(null)}
+      >
+        Close
+      </Button>
+      <h2 className="text-2xl font-heading font-bold mb-4">
+        {selectedFaculty.name}
+      </h2>
+      <p className="mb-2 text-muted-foreground">{selectedFaculty.designation}</p>
+      {selectedFaculty.brief_info && (
+        <div className="mb-4">
+          <h3 className="font-semibold">Brief Info:</h3>
+          <p>{selectedFaculty.brief_info}</p>
+        </div>
+      )}
+      <ul className="space-y-2">
+        {selectedFaculty.education && <li><strong>Education:</strong> {selectedFaculty.education}</li>}
+        {selectedFaculty.subjects_taught && <li><strong>Subjects Taught:</strong> {selectedFaculty.subjects_taught}</li>}
+        {selectedFaculty.funded_projects && <li><strong>Funded Projects:</strong> {selectedFaculty.funded_projects}</li>}
+        {selectedFaculty.honours_achievements && <li><strong>Honours & Achievements:</strong> {selectedFaculty.honours_achievements}</li>}
+        {selectedFaculty.memberships && <li><strong>Memberships:</strong> {selectedFaculty.memberships}</li>}
+        {selectedFaculty.patents && <li><strong>Patents:</strong> {selectedFaculty.patents}</li>}
+        {selectedFaculty.workshops_attended && <li><strong>Workshops Attended:</strong> {selectedFaculty.workshops_attended}</li>}
+      </ul>
+    </div>
+  </div>
+)} */}
       </div>
 
       {filteredFaculty.length === 0 && (
@@ -116,5 +157,6 @@ const Faculty = () => {
     </div>
   );
 };
+
 
 export default Faculty;
