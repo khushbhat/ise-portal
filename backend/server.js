@@ -652,12 +652,12 @@ app.get('/api/resources', async (req, res) => {
 });
 
 app.post('/api/resources', async (req, res) => {
-  const { title, description, link, icon } = req.body;
+  const { title, description, link, type } = req.body;
   
   try {
     const [result] = await pool.query(
-      'INSERT INTO resources (title, description, link, icon) VALUES (?, ?, ?, ?)',
-      [title, description, link, icon]
+      'INSERT INTO resources (title, description, link, type) VALUES (?, ?, ?, ?)',
+      [title, description, link, type]
     );
     
     res.json({ success: true, id: result.insertId });
@@ -667,12 +667,12 @@ app.post('/api/resources', async (req, res) => {
 });
 
 app.put('/api/resources/:id', async (req, res) => {
-  const { title, description, link, icon } = req.body;
+  const { title, description, link, type } = req.body;
   
   try {
     await pool.query(
-      'UPDATE resources SET title = ?, description = ?, link = ?, icon = ? WHERE id = ?',
-      [title, description, link, icon, req.params.id]
+      'UPDATE resources SET title = ?, description = ?, link = ?, type = ? WHERE id = ?',
+      [title, description, link, type, req.params.id]
     );
     
     res.json({ success: true });

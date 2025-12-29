@@ -171,6 +171,6 @@ CREATE TABLE IF NOT EXISTS resources (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   link VARCHAR(500),
-  icon VARCHAR(50),
+  type VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

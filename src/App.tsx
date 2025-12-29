@@ -13,6 +13,7 @@ import Events from "./pages/Events";
 import Achievements from "./pages/Achievements";
 import Contact from "./pages/Contact";
 import Resources from "./pages/Resources";
+import ResourceDetail from "./pages/ResourceDetail";
 import BOSandBOE from "./pages/BOSandBOE";
 import Activities from "./pages/Activities";
 import AdminLogin from "./pages/AdminLogin";
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/resources" element={<Resources />} />
+              <Route path="/resources/:type" element={<ResourceDetail />} />
               <Route path="/bos-boe" element={<BOSandBOE />} />
               <Route path="/activities" element={<Activities />} />
               <Route path="/admin/login" element={<AdminLogin />} />

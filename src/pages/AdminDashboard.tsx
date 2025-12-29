@@ -40,7 +40,7 @@ interface Resource {
   title: string;
   description: string;
   link: string;
-  icon: string;
+  type: string;
 }
 
 interface Event {
@@ -294,21 +294,25 @@ const AdminDashboard = () => {
     const formData = new FormData(e.currentTarget);
     
     try {
-      await announcementsAPI.create({
+      const response = await announcementsAPI.create({
         title: formData.get("title") as string,
         description: formData.get("description") as string,
       });
       
-      await loadData();
-      toast({
-        title: "Success",
-        description: "Announcement added successfully",
-      });
-      e.currentTarget.reset();
+      if (response.success) {
+        await loadData();
+        toast({
+          title: "Success",
+          description: "Announcement added successfully",
+        });
+        e.currentTarget.reset();
+      } else {
+        throw new Error("Failed to add announcement");
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add announcement",
+        description: error instanceof Error ? error.message : "Failed to add announcement",
         variant: "destructive",
       });
     }
@@ -392,20 +396,24 @@ const AdminDashboard = () => {
     const formData = new FormData(e.currentTarget);
     
     try {
-      await resourcesAPI.create({
+      const response = await resourcesAPI.create({
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         link: formData.get("link") as string,
-        icon: formData.get("icon") as string,
+        type: formData.get("type") as string,
       });
       
-      await loadData();
-      toast({ title: "Success", description: "Resource added successfully" });
-      e.currentTarget.reset();
+      if (response.success) {
+        await loadData();
+        toast({ title: "Success", description: "Resource added successfully" });
+        e.currentTarget.reset();
+      } else {
+        throw new Error("Failed to add resource");
+      }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add resource",
+        description: error instanceof Error ? error.message : "Failed to add resource",
         variant: "destructive",
       });
     }
@@ -952,8 +960,16 @@ const AdminDashboard = () => {
                     <Input id="r-link" name="link" type="url" placeholder="https://drive.google.com/..." required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="r-icon">Icon Name</Label>
-                    <Input id="r-icon" name="icon" placeholder="BookOpen" required />
+                    <Label htmlFor="r-type">Resource Type</Label>
+                    <select id="r-type" name="type" required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      <option value="">Select a type</option>
+                      <option value="Syllabus">Syllabus</option>
+                      <option value="Study Materials">Study Materials</option>
+                      <option value="Timetables">Timetables</option>
+                      <option value="Vo'ISE Magazines">Vo'ISE Magazines</option>
+                      <option value="NBA Documents">NBA Documents</option>
+                      <option value="Others">Others</option>
+                    </select>
                   </div>
                   <Button type="submit">
                     <Plus className="mr-2 h-4 w-4" />
@@ -977,6 +993,7 @@ const AdminDashboard = () => {
                         <div>
                           <h3 className="font-semibold">{resource.title}</h3>
                           <p className="text-sm text-muted-foreground">{resource.description}</p>
+                          <p className="text-xs text-accent mt-1">Type: {resource.type}</p>
                           <a href={resource.link} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline">
                             {resource.link}
                           </a>

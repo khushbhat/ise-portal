@@ -1,68 +1,52 @@
-import { useState, useEffect } from "react";
-import { BookOpen, FileText, GraduationCap, Calendar, BookMarked, Award } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BookOpen, FileText, Package, Calendar, BookMarked, Award } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Resources = () => {
-  const [resourceCategories, setResourceCategories] = useState([
+  const navigate = useNavigate();
+
+  const resourceCategories = [
     {
-      id: "1",
-      icon: "BookOpen",
+      id: "syllabus",
+      icon: BookOpen,
       title: "Syllabus",
       description: "Course syllabus and curriculum details",
-      link: "#",
     },
     {
-      id: "2",
-      icon: "FileText",
+      id: "study-materials",
+      icon: FileText,
       title: "Study Materials",
       description: "Lecture notes and reference materials",
-      link: "#",
     },
     {
-      id: "3",
-      icon: "GraduationCap",
-      title: "Innovations in Teaching & Learning",
-      description: "Modern pedagogical approaches and methods",
-      link: "#",
-    },
-    {
-      id: "4",
-      icon: "Calendar",
+      id: "timetables",
+      icon: Calendar,
       title: "Timetables",
       description: "Current semester schedules and timetables",
-      link: "#",
     },
     {
-      id: "5",
-      icon: "BookMarked",
+      id: "voise-magazines",
+      icon: BookMarked,
       title: "Vo'ISE Magazines",
       description: "Departmental magazine and publications",
-      link: "#",
     },
     {
-      id: "6",
-      icon: "Award",
+      id: "nba-documents",
+      icon: Award,
       title: "NBA Documents",
       description: "Accreditation and quality assurance documents",
-      link: "#",
     },
-  ]);
+    {
+      id: "others",
+      icon: Package,
+      title: "Others",
+      description: "Additional resources and materials",
+    },
+  ];
 
-  const iconMap: { [key: string]: any } = {
-    BookOpen,
-    FileText,
-    GraduationCap,
-    Calendar,
-    BookMarked,
-    Award,
+  const handleCardClick = (type: string) => {
+    navigate(`/resources/${type}`);
   };
-
-  useEffect(() => {
-    const savedResources = localStorage.getItem("resources");
-    if (savedResources) {
-      setResourceCategories(JSON.parse(savedResources));
-    }
-  }, []);
 
   return (
     <div className="min-h-screen">
@@ -82,16 +66,14 @@ const Resources = () => {
       <section className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {resourceCategories.map((resource) => {
-            const IconComponent = iconMap[resource.icon] || BookOpen;
+            const IconComponent = resource.icon;
             return (
-              <a
+              <div
                 key={resource.id}
-                href={resource.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
+                onClick={() => handleCardClick(resource.id)}
+                className="cursor-pointer"
               >
-                <Card className="glass-card hover-lift cursor-pointer h-full">
+                <Card className="glass-card hover-lift h-full">
                   <CardHeader>
                     <IconComponent className="h-12 w-12 text-accent mb-4" />
                     <CardTitle className="text-xl">{resource.title}</CardTitle>
@@ -102,7 +84,7 @@ const Resources = () => {
                     </CardDescription>
                   </CardContent>
                 </Card>
-              </a>
+              </div>
             );
           })}
         </div>
