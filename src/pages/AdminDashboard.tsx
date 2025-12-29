@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus, Trash2, Edit, ExternalLink } from "lucide-react";
+import { LogOut, Plus, Trash2, Edit, ExternalLink, Menu } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { homeAPI, announcementsAPI, aboutAPI, facultyAPI, resourcesAPI, eventsAPI, bosAPI, boeAPI, achievementsAPI, activitiesAPI } from "@/services/api";
@@ -16,6 +16,7 @@ import { researchAPI } from "@/services/api";
 import { Download } from "lucide-react";
 import { facultyUsersAPI } from "@/services/api";
 import { useRef } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface Announcement {
   id: number;
@@ -105,6 +106,7 @@ interface Publication {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("home");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [faculty, setFaculty] = useState<FacultyMember[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
@@ -318,8 +320,7 @@ const AdminDashboard = () => {
       await loadData();
       toast({
         title: "Deleted",
-        description: "Announcement deleted successfully",
-      });
+        description: "Announcement deleted successfully",});
     } catch (error) {
       toast({
         title: "Error",
@@ -656,18 +657,64 @@ const AdminDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="home" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-            <TabsTrigger value="home">Home</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="announcements">Announcements</TabsTrigger>
-            <TabsTrigger value="faculty">Faculty</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="bos">BOS/BOE</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            <TabsTrigger value="research">Research</TabsTrigger>
-          </TabsList>
+        <div className="flex gap-4">
+          {/* Hamburger Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="shrink-0">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64">
+              <SheetHeader>
+                <SheetTitle>Navigation</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6 flex flex-col gap-2">
+                <Button variant={activeTab === "home" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("home")}>
+                  Home
+                </Button>
+                <Button variant={activeTab === "about" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("about")}>
+                  About
+                </Button>
+                <Button variant={activeTab === "announcements" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("announcements")}>
+                  Announcements
+                </Button>
+                <Button variant={activeTab === "faculty" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("faculty")}>
+                  Faculty
+                </Button>
+                <Button variant={activeTab === "resources" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("resources")}>
+                  Resources
+                </Button>
+                <Button variant={activeTab === "events" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("events")}>
+                  Events
+                </Button>
+                <Button variant={activeTab === "bos" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("bos")}>
+                  BOS/BOE
+                </Button>
+                <Button variant={activeTab === "achievements" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("achievements")}>
+                  Achievements
+                </Button>
+                <Button variant={activeTab === "research" ? "default" : "ghost"} className="justify-start" onClick={() => setActiveTab("research")}>
+                  Research
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-9 h-auto">
+                <TabsTrigger value="home" className="text-xs sm:text-sm">Home</TabsTrigger>
+                <TabsTrigger value="about" className="text-xs sm:text-sm">About</TabsTrigger>
+                <TabsTrigger value="announcements" className="text-xs sm:text-sm">Announcements</TabsTrigger>
+                <TabsTrigger value="faculty" className="text-xs sm:text-sm">Faculty</TabsTrigger>
+                <TabsTrigger value="resources" className="text-xs sm:text-sm">Resources</TabsTrigger>
+                <TabsTrigger value="events" className="text-xs sm:text-sm">Events</TabsTrigger>
+                <TabsTrigger value="bos" className="text-xs sm:text-sm">BOS/BOE</TabsTrigger>
+                <TabsTrigger value="achievements" className="text-xs sm:text-sm">Achievements</TabsTrigger>
+                <TabsTrigger value="research" className="text-xs sm:text-sm">Research</TabsTrigger>
+              </TabsList>
 
           {/* Home Content */}
           <TabsContent value="home" className="space-y-6">
@@ -1257,6 +1304,8 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );

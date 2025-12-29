@@ -108,4 +108,4 @@ const ProfileSection = ({ title, text }: { title: string; text?: string }) =>
     </section>
   ) : null;
 
-export default FacultyProfile;
+export default FacultyProfile;      

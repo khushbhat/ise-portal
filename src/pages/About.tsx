@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Target, Eye, Award, Building2, History, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { aboutAPI } from "@/services/api";
 
 const About = () => {
   const [aboutContent, setAboutContent] = useState({
@@ -8,12 +9,26 @@ const About = () => {
     mission: "Department of Information Science and Engineering shall create high quality IT Engineering Professionals for the betterment of society by: Providing education through an ever improving curriculum and effective pedagogy techniques. Encouraging extra and co-curricular activities to develop their overall personality along with technical skills. Collaborating with industry and academia for strengthening research, innovation and entrepreneurship ecosystem.",
     departmentProfile: "The Department of Information Science and Engineering (ISE) was established in the year 1992 with an objective of producing high quality professionals to meet the demands of the emerging field of Information Technology. Department offers Bachelor's program in Information Science and Engineering (B.E), Master's program in Data Science (MTech) and Doctoral program (Ph.D.)."
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedAboutContent = localStorage.getItem("aboutContent");
-    if (savedAboutContent) {
-      setAboutContent(JSON.parse(savedAboutContent));
-    }
+    const fetchAboutContent = async () => {
+      try {
+        const data = await aboutAPI.get();
+        if (data) {
+          setAboutContent({
+            vision: data.vision || aboutContent.vision,
+            mission: data.mission || aboutContent.mission,
+            departmentProfile: data.department_profile || aboutContent.departmentProfile,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch about content:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAboutContent();
   }, []);
   const stats = [
     { number: "90%", label: "High Profile Placements" },
